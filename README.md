@@ -19,6 +19,7 @@ This is a complete TUI monitoring application in Rust that replicates and improv
 
 ### ✅ TUI Interface
 - **Modern design**: Clean, colorful interface using ratatui
+- **Real-time clock**: Current date/time display with configurable timezone
 - **Navigation**: Arrow keys and vim-style navigation (j/k)
 - **Help system**: Toggle help with 'h' key
 - **Manual refresh**: 'r' key for immediate updates
@@ -75,7 +76,7 @@ The application uses YAML configuration files. Here's an example `config.yaml`:
 
 ```yaml
 settings:
-  refresh_interval: 30  # seconds
+  refresh_interval: 5  # seconds
   log_file: "daystrom.log"
   theme: "default"
 
@@ -111,9 +112,10 @@ hosts:
 ### Configuration Options
 
 #### Settings
-- `refresh_interval`: How often to check services (in seconds)
+- `refresh_interval`: How often to check services (in seconds, default: 5)
 - `log_file`: Path to log file (optional)
 - `theme`: UI theme (default: "default")
+- `timezone`: Timezone for clock display (default: "UTC", examples: "America/New_York", "Europe/London", "Asia/Tokyo")
 
 #### Host Configuration
 - `name`: Display name for the host

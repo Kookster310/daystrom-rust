@@ -95,7 +95,7 @@ fn ui(f: &mut Frame, app: &App) {
         .margin(2)
         .constraints(
             [
-                Constraint::Length(3),  // Title
+                Constraint::Length(4),  // Title (increased for clock)
                 Constraint::Length(3),  // Stats
                 Constraint::Min(0),     // Main content
                 Constraint::Length(3),  // Help/Status
@@ -117,6 +117,24 @@ fn ui(f: &mut Frame, app: &App) {
 }
 
 fn render_title(f: &mut Frame, app: &App, area: ratatui::layout::Rect) {
+    let now = chrono::Utc::now();
+    let timezone = &app.config.settings.timezone;
+    
+    // Try to parse the timezone, fallback to UTC if invalid
+    let formatted_time = match timezone.parse::<chrono_tz::Tz>() {
+        Ok(tz) => now.with_timezone(&tz).format("%H:%M:%S %Z"),
+        Err(_) => now.format("%H:%M:%S UTC"),
+    };
+    
+    let last_update_formatted = match timezone.parse::<chrono_tz::Tz>() {
+        Ok(tz) => app.last_update.with_timezone(&tz).format("%H:%M:%S"),
+        Err(_) => app.last_update.format("%H:%M:%S"),
+    };
+    
+    let clock_text = format!("🕐 {} | Last Update: {}", 
+        formatted_time,
+        last_update_formatted);
+    
     let title = Paragraph::new(vec![
         Line::from(vec![
             Span::styled(
@@ -128,7 +146,7 @@ fn render_title(f: &mut Frame, app: &App, area: ratatui::layout::Rect) {
         ]),
         Line::from(vec![
             Span::styled(
-                format!("Last Update: {}", app.last_update.format("%H:%M:%S")),
+                clock_text,
                 Style::default().fg(Color::Gray),
             ),
         ]),
@@ -287,10 +305,19 @@ fn render_help(f: &mut Frame, area: ratatui::layout::Rect) {
 }
 
 fn render_status_bar(f: &mut Frame, app: &App, area: ratatui::layout::Rect) {
+    let now = chrono::Utc::now();
+    let timezone = &app.config.settings.timezone;
+    
+    // Try to parse the timezone, fallback to UTC if invalid
+    let formatted_time = match timezone.parse::<chrono_tz::Tz>() {
+        Ok(tz) => now.with_timezone(&tz).format("%H:%M:%S %Z"),
+        Err(_) => now.format("%H:%M:%S UTC"),
+    };
+    
     let status_text = if app.show_help {
-        "Press 'h' to hide help | Press 'q' to quit"
+        format!("🕐 {} | Press 'h' to hide help | Press 'q' to quit", formatted_time)
     } else {
-        "Press 'h' for help | Press 'q' to quit | Press 'r' to refresh"
+        format!("🕐 {} | Press 'h' for help | Press 'q' to quit | Press 'r' to refresh", formatted_time)
     };
 
     let status = Paragraph::new(status_text)

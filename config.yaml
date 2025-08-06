@@ -1,7 +1,8 @@
 settings:
-  refresh_interval: 30  # seconds
+  refresh_interval: 5  # seconds
   log_file: "daystrom.log"
   theme: "default"
+  timezone: "UTC"  # timezone for clock display (e.g., "America/New_York", "Europe/London")
 
 hosts:
   - name: "Web Server"

@@ -61,6 +61,8 @@ pub struct Settings {
     pub log_file: Option<String>,
     #[serde(default = "default_theme")]
     pub theme: String,
+    #[serde(default = "default_timezone")]
+    pub timezone: String,
 }
 
 fn default_timeout() -> u64 {
@@ -72,11 +74,15 @@ fn default_service_timeout() -> u64 {
 }
 
 fn default_refresh_interval() -> u64 {
-    30
+    5
 }
 
 fn default_theme() -> String {
     "default".to_string()
+}
+
+fn default_timezone() -> String {
+    "UTC".to_string()
 }
 
 impl Config {
@@ -116,6 +122,7 @@ impl Default for Settings {
             refresh_interval: default_refresh_interval(),
             log_file: None,
             theme: default_theme(),
+            timezone: default_timezone(),
         }
     }
 } 
