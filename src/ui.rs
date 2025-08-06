@@ -246,11 +246,11 @@ fn render_services_table(f: &mut Frame, app: &App, area: ratatui::layout::Rect) 
         rows,
         &[
             Constraint::Length(20),
-            Constraint::Length(15),
+            Constraint::Length(25),
             Constraint::Length(10),
             Constraint::Length(12),
             Constraint::Length(15),
-            Constraint::Min(20),
+            Constraint::Length(8),
         ]
     )
     .header(
