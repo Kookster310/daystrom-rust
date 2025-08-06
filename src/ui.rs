@@ -77,6 +77,16 @@ async fn run_app_internal<B: Backend>(
                         // Trigger manual refresh
                         app.update_statuses().await;
                     }
+                    KeyCode::Enter => {
+                        if !app.show_help {
+                            app.enter_host_detail();
+                        }
+                    }
+                    KeyCode::Char('b') | KeyCode::Char('B') => {
+                        if app.show_host_detail {
+                            app.exit_host_detail();
+                        }
+                    }
                     _ => {}
                 }
             }
@@ -109,6 +119,8 @@ fn ui(f: &mut Frame, app: &App) {
     
     if app.show_help {
         render_help(f, chunks[2]);
+    } else if app.show_host_detail {
+        render_host_detail(f, app, chunks[2]);
     } else {
         render_services_table(f, app, chunks[2]);
     }
@@ -196,9 +208,9 @@ fn render_stats(f: &mut Frame, app: &App, area: ratatui::layout::Rect) {
 }
 
 fn render_services_table(f: &mut Frame, app: &App, area: ratatui::layout::Rect) {
-    let statuses = app.get_status_list();
+    let grouped = app.get_grouped_status_list();
     
-    if statuses.is_empty() {
+    if grouped.is_empty() {
         let no_data = Paragraph::new("No services configured or no data available yet...")
             .block(Block::default().borders(Borders::ALL).title("Services"))
             .alignment(ratatui::layout::Alignment::Center);
@@ -206,41 +218,63 @@ fn render_services_table(f: &mut Frame, app: &App, area: ratatui::layout::Rect) 
         return;
     }
 
-    let rows: Vec<Row> = statuses
-        .iter()
-        .enumerate()
-        .map(|(index, status)| {
-            let is_selected = index == app.selected_index;
+    let mut rows: Vec<Row> = Vec::new();
+    let mut current_index = 0;
+    
+    for (host_name, services) in &grouped {
+        // Add host header row
+        let is_host_selected = current_index == app.selected_index;
+        let host_header = Row::new(vec![
+            Cell::from(format!("{}", host_name)),
+            Cell::from(""),
+            Cell::from(""),
+            Cell::from(""),
+            Cell::from(""),
+            Cell::from(""),
+        ])
+        .style(if is_host_selected {
+            Style::default().fg(Color::Black).bg(Color::Cyan)
+        } else {
+            Style::default().fg(Color::Cyan).add_modifier(Modifier::BOLD)
+        });
+        rows.push(host_header);
+        current_index += 1;
+        
+        // Add service rows
+        for service in services {
+            let is_service_selected = current_index == app.selected_index;
             
-            let _status_color = match status.status {
+            let _status_color = match service.status {
                 crate::monitor::ServiceStatus::Up => Color::Green,
                 crate::monitor::ServiceStatus::Down => Color::Red,
                 crate::monitor::ServiceStatus::Unknown => Color::Yellow,
             };
 
-            let response_time = if status.response_time.as_millis() > 0 {
-                format!("{}ms", status.response_time.as_millis())
+            let response_time = if service.response_time.as_millis() > 0 {
+                format!("{}ms", service.response_time.as_millis())
             } else {
                 "N/A".to_string()
             };
 
-            let error_msg = status.error_message.as_deref().unwrap_or("");
+            let error_msg = service.error_message.as_deref().unwrap_or("");
 
-            Row::new(vec![
-                Cell::from(format!("{}", status.host_name)),
-                Cell::from(format!("{}:{}", status.service_name, status.port)),
-                Cell::from(format!("{}", status.protocol)),
-                Cell::from(format!("{}", status.status)),
+            let service_row = Row::new(vec![
+                Cell::from(format!("  └─ {}", service.service_name)),
+                Cell::from(format!("{}", service.port)),
+                Cell::from(format!("{}", service.protocol)),
+                Cell::from(format!("{}", service.status)),
                 Cell::from(response_time),
                 Cell::from(error_msg),
             ])
-            .style(if is_selected {
+            .style(if is_service_selected {
                 Style::default().fg(Color::Black).bg(Color::White)
             } else {
                 Style::default()
-            })
-        })
-        .collect();
+            });
+            rows.push(service_row);
+            current_index += 1;
+        }
+    }
 
     let table = Table::new(
         rows,
@@ -255,8 +289,8 @@ fn render_services_table(f: &mut Frame, app: &App, area: ratatui::layout::Rect) 
     )
     .header(
         Row::new(vec![
-            "Host",
-            "Service",
+            "Host/Service",
+            "Port",
             "Protocol",
             "Status",
             "Response Time",
@@ -292,6 +326,14 @@ fn render_help(f: &mut Frame, area: ratatui::layout::Rect) {
             Span::styled("- Manual refresh", Style::default()),
         ]),
         Line::from(vec![
+            Span::styled("Enter ", Style::default().fg(Color::Yellow)),
+            Span::styled("- View host details", Style::default()),
+        ]),
+        Line::from(vec![
+            Span::styled("b/B ", Style::default().fg(Color::Yellow)),
+            Span::styled("- Back to main view", Style::default()),
+        ]),
+        Line::from(vec![
             Span::styled("q/ESC ", Style::default().fg(Color::Yellow)),
             Span::styled("- Quit", Style::default()),
         ]),
@@ -316,8 +358,10 @@ fn render_status_bar(f: &mut Frame, app: &App, area: ratatui::layout::Rect) {
     
     let status_text = if app.show_help {
         format!("🕐 {} | Press 'h' to hide help | Press 'q' to quit", formatted_time)
+    } else if app.show_host_detail {
+        format!("🕐 {} | Press 'b' to go back | Press 'q' to quit", formatted_time)
     } else {
-        format!("🕐 {} | Press 'h' for help | Press 'q' to quit | Press 'r' to refresh", formatted_time)
+        format!("🕐 {} | Press 'h' for help | Press 'q' to quit | Press 'r' to refresh | Press 'Enter' for details", formatted_time)
     };
 
     let status = Paragraph::new(status_text)
@@ -325,4 +369,137 @@ fn render_status_bar(f: &mut Frame, app: &App, area: ratatui::layout::Rect) {
         .alignment(ratatui::layout::Alignment::Center);
 
     f.render_widget(status, area);
+}
+
+fn render_host_detail(f: &mut Frame, app: &App, area: ratatui::layout::Rect) {
+    if let Some(host) = app.get_selected_host() {
+        let host_services = app.get_host_services_status(&host.name);
+        
+        // Create layout for host detail
+        let chunks = Layout::default()
+            .direction(Direction::Vertical)
+            .constraints([
+                Constraint::Length(8),  // Host info
+                Constraint::Min(0),     // Services table
+            ].as_ref())
+            .split(area);
+
+        // Render host information
+        render_host_info(f, host, chunks[0]);
+        
+        // Render services table
+        render_host_services_table(f, app, &host_services, chunks[1]);
+    } else {
+        let error_text = "Host not found";
+        let error_widget = Paragraph::new(error_text)
+            .block(Block::default().borders(Borders::ALL).title("Error"))
+            .alignment(ratatui::layout::Alignment::Center);
+        f.render_widget(error_widget, area);
+    }
+}
+
+fn render_host_info(f: &mut Frame, host: &crate::config::Host, area: ratatui::layout::Rect) {
+    let host_text = vec![
+        Line::from(vec![
+            Span::styled("Host: ", Style::default().fg(Color::Cyan).add_modifier(Modifier::BOLD)),
+            Span::styled(&host.name, Style::default().fg(Color::White)),
+        ]),
+        Line::from(vec![
+            Span::styled("Address: ", Style::default().fg(Color::Cyan).add_modifier(Modifier::BOLD)),
+            Span::styled(&host.address, Style::default().fg(Color::White)),
+        ]),
+        Line::from(vec![
+            Span::styled("Description: ", Style::default().fg(Color::Cyan).add_modifier(Modifier::BOLD)),
+            Span::styled(
+                host.description.as_deref().unwrap_or("No description"),
+                Style::default().fg(Color::White)
+            ),
+        ]),
+        Line::from(vec![
+            Span::styled("Services: ", Style::default().fg(Color::Cyan).add_modifier(Modifier::BOLD)),
+            Span::styled(
+                format!("{}", host.services.len()),
+                Style::default().fg(Color::White)
+            ),
+        ]),
+        Line::from(vec![
+            Span::styled("Timeout: ", Style::default().fg(Color::Cyan).add_modifier(Modifier::BOLD)),
+            Span::styled(
+                format!("{}s", host.timeout),
+                Style::default().fg(Color::White)
+            ),
+        ]),
+    ];
+
+    let host_info = Paragraph::new(host_text)
+        .block(Block::default().borders(Borders::ALL).title("Host Information"))
+        .wrap(Wrap { trim: true });
+
+    f.render_widget(host_info, area);
+}
+
+fn render_host_services_table(f: &mut Frame, _app: &App, services: &[crate::monitor::ServiceCheck], area: ratatui::layout::Rect) {
+    if services.is_empty() {
+        let no_data = Paragraph::new("No services available for this host...")
+            .block(Block::default().borders(Borders::ALL).title("Services"))
+            .alignment(ratatui::layout::Alignment::Center);
+        f.render_widget(no_data, area);
+        return;
+    }
+
+    let rows: Vec<Row> = services
+        .iter()
+        .map(|status| {
+            let _status_color = match status.status {
+                crate::monitor::ServiceStatus::Up => Color::Green,
+                crate::monitor::ServiceStatus::Down => Color::Red,
+                crate::monitor::ServiceStatus::Unknown => Color::Yellow,
+            };
+
+            let response_time = if status.response_time.as_millis() > 0 {
+                format!("{}ms", status.response_time.as_millis())
+            } else {
+                "N/A".to_string()
+            };
+
+            let error_msg = status.error_message.as_deref().unwrap_or("");
+
+            Row::new(vec![
+                Cell::from(format!("{}", status.service_name)),
+                Cell::from(format!("{}", status.port)),
+                Cell::from(format!("{}", status.protocol)),
+                Cell::from(format!("{}", status.status)),
+                Cell::from(response_time),
+                Cell::from(error_msg),
+            ])
+            .style(Style::default())
+        })
+        .collect();
+
+    let table = Table::new(
+        rows,
+        &[
+            Constraint::Length(30),
+            Constraint::Length(8),
+            Constraint::Length(10),
+            Constraint::Length(12),
+            Constraint::Length(15),
+            Constraint::Length(8),
+        ]
+    )
+    .header(
+        Row::new(vec![
+            "Service Name",
+            "Port",
+            "Protocol",
+            "Status",
+            "Response Time",
+            "Error",
+        ])
+        .style(Style::default().fg(Color::Cyan).add_modifier(Modifier::BOLD)),
+    )
+    .block(Block::default().borders(Borders::ALL).title("Host Services"))
+    .column_spacing(1);
+
+    f.render_widget(table, area);
 } 
