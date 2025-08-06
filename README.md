@@ -1,10 +1,6 @@
-# Daystrom TUI - Rust Edition
+# Daystrom TUI
 
-A powerful monitoring tool with a TUI (Terminal User Interface) similar to k9s or htop, designed to monitor multiple hosts and services across different ports and protocols. Built in Rust for performance and reliability.
-
-## Overview
-
-This is a complete TUI monitoring application in Rust that replicates and improves upon the functionality of the original Go implementation. The Rust version provides better performance, memory safety, and a more modern TUI interface.
+A powerful TUI monitoring tool designed to monitor multiple hosts and services across different ports and protocols. Built in Rust for performance and reliability.
 
 ## Features
 
@@ -327,14 +323,13 @@ make help
 ## Future Enhancements
 
 ### Potential Improvements
-1. **Web interface**: Add optional web dashboard
-2. **Alerting**: Email/SMS notifications for failures
-3. **Metrics export**: Prometheus/Graphite integration
-4. **Plugin system**: Custom monitoring plugins
-5. **Configuration validation**: Schema validation for YAML
-6. **Service discovery**: Automatic service detection
-7. **Historical data**: Store and display trends
-8. **Authentication**: Secure access control
+1. **Alerting**: Email/SMS notifications for failures
+2. **Metrics export**: Prometheus/Graphite integration
+3. **Plugin system**: Custom monitoring plugins
+4. **Configuration validation**: Schema validation for YAML
+5. **Service discovery**: Automatic service detection
+6. **Historical data**: Store and display trends
+7. **Authentication**: Secure access control
 
 ### Performance Optimizations
 1. **Connection pooling**: Reuse HTTP connections
