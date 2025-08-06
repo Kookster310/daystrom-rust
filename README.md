@@ -1,6 +1,6 @@
 # Daystrom TUI
 
-![Daystrom TUI Demo](https://imgur.com/a/Bl8eUzn)
+![Daystrom TUI Demo](https://i.imgur.com/8UMC7g4.gif)
 
 A powerful TUI monitoring tool designed to monitor multiple hosts and services across different ports and protocols. Built in Rust for performance and reliability.
 
