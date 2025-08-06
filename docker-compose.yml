@@ -1,0 +1,51 @@
+version: '3.8'
+
+services:
+  daystrom-tui:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: daystrom-tui
+    image: daystrom-tui:latest
+    volumes:
+      - ./config.yaml:/app/config.yaml:ro
+      - ./logs:/app/logs
+    environment:
+      - RUST_LOG=info
+      - TERM=xterm-256color
+    stdin_open: true
+    tty: true
+    restart: unless-stopped
+    network_mode: host
+    # For non-host networking, uncomment and modify:
+    # ports:
+    #   - "8080:8080"
+    # networks:
+    #   - daystrom-network
+
+  # Optional: Add a development service
+  daystrom-dev:
+    build:
+      context: .
+      dockerfile: Dockerfile.dev
+    container_name: daystrom-tui-dev
+    volumes:
+      - .:/app
+      - cargo-cache:/usr/local/cargo/registry
+      - target-cache:/app/target
+    environment:
+      - RUST_LOG=debug
+      - TERM=xterm-256color
+    stdin_open: true
+    tty: true
+    command: ["cargo", "run", "--", "--config", "/app/config.yaml", "--log-level", "debug"]
+
+# Optional: Define networks
+# networks:
+#   daystrom-network:
+#     driver: bridge
+
+# Optional: Define volumes for caching
+volumes:
+  cargo-cache:
+  target-cache: 

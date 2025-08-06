@@ -1,0 +1,65 @@
+settings:
+  refresh_interval: 30  # seconds
+  log_file: "daystrom.log"
+  theme: "default"
+
+hosts:
+  - name: "Web Server"
+    address: "google.com"
+    description: "Google's main web server"
+    timeout: 5
+    services:
+      - name: "HTTPS"
+        port: 443
+        protocol: "https"
+        description: "Secure web traffic"
+        timeout: 10
+      - name: "HTTP"
+        port: 80
+        protocol: "http"
+        description: "Web traffic"
+        timeout: 10
+
+  - name: "DNS Server"
+    address: "8.8.8.8"
+    description: "Google's public DNS"
+    timeout: 5
+    services:
+      - name: "DNS"
+        port: 53
+        protocol: "tcp"
+        description: "DNS queries"
+        timeout: 5
+
+  - name: "Local Development"
+    address: "localhost"
+    description: "Local development services"
+    timeout: 3
+    services:
+      - name: "SSH"
+        port: 22
+        protocol: "tcp"
+        description: "SSH server"
+        timeout: 3
+      - name: "HTTP Local"
+        port: 8080
+        protocol: "http"
+        description: "Local web server"
+        timeout: 5
+        path: "/health"
+
+  - name: "Database Server"
+    address: "postgresql.org"
+    description: "PostgreSQL documentation"
+    timeout: 5
+    services:
+      - name: "HTTPS"
+        port: 443
+        protocol: "https"
+        description: "Secure web traffic"
+        timeout: 10
+      - name: "HTTP"
+        port: 80
+        protocol: "http"
+        description: "Web traffic"
+        timeout: 10 

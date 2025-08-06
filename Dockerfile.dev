@@ -1,0 +1,32 @@
+# Development Dockerfile for Daystrom TUI
+FROM rust:1.75-alpine
+
+# Install development dependencies
+RUN apk add --no-cache \
+    musl-dev \
+    openssl-dev \
+    pkgconfig \
+    cargo-watch \
+    git \
+    vim \
+    curl \
+    && rm -rf /var/cache/apk/*
+
+# Set working directory
+WORKDIR /app
+
+# Copy Cargo files
+COPY Cargo.toml Cargo.lock ./
+
+# Install cargo-watch for development
+RUN cargo install cargo-watch
+
+# Copy source code
+COPY . .
+
+# Set environment variables
+ENV RUST_LOG=debug
+ENV TERM=xterm-256color
+
+# Default command for development
+CMD ["cargo", "run", "--", "--config", "/app/config.yaml", "--log-level", "debug"] 
