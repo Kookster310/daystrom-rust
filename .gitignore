@@ -55,6 +55,7 @@ test-results/
 # Local configuration overrides
 config.local.yaml
 config.*.local.yaml
+310networks.yaml
 
 # Binary files (if any are generated outside target/)
 *.exe
