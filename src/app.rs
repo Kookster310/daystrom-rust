@@ -85,9 +85,9 @@ impl App {
                     self.selected_host_name = Some(host_name);
                     self.show_host_detail = true;
                 }
-                SelectedItem::Service(service) => {
-                    self.selected_host_name = Some(service.host_name.clone());
-                    self.show_host_detail = true;
+                SelectedItem::Service(_) => {
+                    // Services are no longer selectable, so this shouldn't happen
+                    // But we'll keep it for safety
                 }
             }
         }
@@ -138,37 +138,18 @@ impl App {
 
     pub fn get_selected_item(&self) -> Option<SelectedItem> {
         let grouped = self.get_grouped_status_list();
-        let mut current_index = 0;
         
-        for (host_name, services) in &grouped {
-            // Check if selection is on this host header
-            if current_index == self.selected_index {
-                return Some(SelectedItem::HostHeader(host_name.clone()));
-            }
-            current_index += 1;
-            
-            // Check if selection is on one of this host's services
-            for service in services {
-                if current_index == self.selected_index {
-                    return Some(SelectedItem::Service(service.clone()));
-                }
-                current_index += 1;
-            }
+        // Only host headers are selectable, so just return the host at selected_index
+        if let Some((host_name, _)) = grouped.get(self.selected_index) {
+            Some(SelectedItem::HostHeader(host_name.clone()))
+        } else {
+            None
         }
-        
-        None
     }
 
     pub fn get_total_items(&self) -> usize {
-        let grouped = self.get_grouped_status_list();
-        let mut total = 0;
-        
-        for (_, services) in &grouped {
-            total += 1; // Host header
-            total += services.len(); // Services
-        }
-        
-        total
+        // Only count host headers as selectable items
+        self.get_grouped_status_list().len()
     }
 
     pub fn get_summary_stats(&self) -> (usize, usize, usize) {

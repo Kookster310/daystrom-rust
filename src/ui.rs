@@ -219,11 +219,11 @@ fn render_services_table(f: &mut Frame, app: &App, area: ratatui::layout::Rect) 
     }
 
     let mut rows: Vec<Row> = Vec::new();
-    let mut current_index = 0;
+    let mut host_index = 0;
     
     for (host_name, services) in &grouped {
-        // Add host header row
-        let is_host_selected = current_index == app.selected_index;
+        // Add host header row - only host headers are selectable
+        let is_host_selected = host_index == app.selected_index;
         let host_header = Row::new(vec![
             Cell::from(format!("{}", host_name)),
             Cell::from(""),
@@ -238,12 +238,10 @@ fn render_services_table(f: &mut Frame, app: &App, area: ratatui::layout::Rect) 
             Style::default().fg(Color::Cyan).add_modifier(Modifier::BOLD)
         });
         rows.push(host_header);
-        current_index += 1;
+        host_index += 1;
         
-        // Add service rows
+        // Add service rows - these are not selectable, just display
         for service in services {
-            let is_service_selected = current_index == app.selected_index;
-            
             let _status_color = match service.status {
                 crate::monitor::ServiceStatus::Up => Color::Green,
                 crate::monitor::ServiceStatus::Down => Color::Red,
@@ -266,13 +264,8 @@ fn render_services_table(f: &mut Frame, app: &App, area: ratatui::layout::Rect) 
                 Cell::from(response_time),
                 Cell::from(error_msg),
             ])
-            .style(if is_service_selected {
-                Style::default().fg(Color::Black).bg(Color::White)
-            } else {
-                Style::default()
-            });
+            .style(Style::default()); // No selection styling for service rows
             rows.push(service_row);
-            current_index += 1;
         }
     }
 
@@ -361,7 +354,7 @@ fn render_status_bar(f: &mut Frame, app: &App, area: ratatui::layout::Rect) {
     } else if app.show_host_detail {
         format!("🕐 {} | Press 'b' to go back | Press 'q' to quit", formatted_time)
     } else {
-        format!("🕐 {} | Press 'h' for help | Press 'q' to quit | Press 'r' to refresh | Press 'Enter' for details", formatted_time)
+        format!("🕐 {} | Press 'h' for help | Press 'q' to quit | Press 'r' to refresh | Press 'Enter' for host details", formatted_time)
     };
 
     let status = Paragraph::new(status_text)
