@@ -272,12 +272,12 @@ fn render_services_table(f: &mut Frame, app: &App, area: ratatui::layout::Rect) 
     let table = Table::new(
         rows,
         &[
-            Constraint::Length(20),
-            Constraint::Length(25),
-            Constraint::Length(10),
-            Constraint::Length(12),
-            Constraint::Length(15),
-            Constraint::Length(8),
+            Constraint::Length(25),  // Host/Service - increased
+            Constraint::Length(8),   // Port - kept same
+            Constraint::Length(10),  // Protocol - kept same
+            Constraint::Length(12),  // Status - kept same
+            Constraint::Length(15),  // Response Time - kept same
+            Constraint::Min(20),     // Error - much more space, minimum 20 chars
         ]
     )
     .header(
@@ -472,12 +472,12 @@ fn render_host_services_table(f: &mut Frame, _app: &App, services: &[crate::moni
     let table = Table::new(
         rows,
         &[
-            Constraint::Length(30),
-            Constraint::Length(8),
-            Constraint::Length(10),
-            Constraint::Length(12),
-            Constraint::Length(15),
-            Constraint::Length(8),
+            Constraint::Length(30),  // Service Name - kept same
+            Constraint::Length(8),   // Port - kept same
+            Constraint::Length(10),  // Protocol - kept same
+            Constraint::Length(12),  // Status - kept same
+            Constraint::Length(15),  // Response Time - kept same
+            Constraint::Min(25),     // Error - much more space, minimum 25 chars
         ]
     )
     .header(
